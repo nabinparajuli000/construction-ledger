@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1>{{ material.name }}</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'material-list' %}">Materials</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ material.name }}</li>
+            </ol>
+        </nav>
+    </div>
+    <div>
+        <a href="{% url 'material-update' material.pk %}" class="btn btn-outline-primary me-2">
+            <i class="bi bi-pencil"></i> Edit
+        </a>
+        <a href="{% url 'transaction-create' %}?material={{ material.pk }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> New Transaction
+        </a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Material Details</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4">Category</dt>
+                    <dd class="col-sm-8">{{ material.category.name }}</dd>
+
+                    <dt class="col-sm-4">Unit of Measure</dt>
+                    <dd class="col-sm-8">{{ material.unit_of_measure.name }} ({{ material.unit_of_measure.abbreviation }})</dd>
+
+                    <dt class="col-sm-4">Price per Unit</dt>
+                    <dd class="col-sm-8">${{ material.price_per_unit|floatformat:2|intcomma }}</dd>
+
+                    <dt class="col-sm-4">Current Quantity</dt>
+                    <dd class="col-sm-8">
+                        {{ material.current_quantity|floatformat:"-2"|intcomma }} {{ material.unit_of_measure.abbreviation }}
+                        {% if material.current_quantity <= material.minimum_stock_level %}
+                        <span class="badge bg-danger ms-2">Low Stock</span>
+                        {% endif %}
+                    </dd>
+
+                    <dt class="col-sm-4">Minimum Stock Level</dt>
+                    <dd class="col-sm-8">{{ material.minimum_stock_level|floatformat:"-2"|intcomma }} {{ material.unit_of_measure.abbreviation }}</dd>
+
+                    <dt class="col-sm-4">Inventory Value</dt>
+                    <dd class="col-sm-8">${{ material.total_value|floatformat:2|intcomma }}</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Stock Level</h5>
+            </div>
+            <div class="card-body">
+                <div class="progress mb-3" style="height: 30px;">
+                    {% with percentage=material.stock_percentage %}
+                    <div class="progress-bar 
+                        {% if percentage < 20 %}bg-danger
+                        {% elif percentage < 50 %}bg-warning
+                        {% else %}bg-success{% endif %}" 
+                        role="progressbar" 
+                        style="width: {{ percentage }}%;" 
+                        aria-valuenow="{{ percentage }}" 
+                        aria-valuemin="0" 
+                        aria-valuemax="100">
+                        {{ percentage|floatformat:"0" }}%
+                    </div>
+                    {% endwith %}
+                </div>
+                <p class="mb-1"><strong>Current:</strong> {{ material.current_quantity|floatformat:"-2" }} {{ material.unit_of_measure.abbreviation }}</p>
+                <p class="mb-0"><strong>Minimum:</strong> {{ material.minimum_stock_level|floatformat:"-2" }} {{ material.unit_of_measure.abbreviation }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Recent Transactions</h5>
+        <a href="{% url 'transaction-list' %}?material={{ material.pk }}" class="btn btn-sm btn-outline-primary">
+            View All
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th class="text-end">Quantity</th>
+                        <th class="text-end">Unit Price</th>
+                        <th class="text-end">Amount</th>
+                        <th>Reference</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tx in transactions %}
+                    <tr>
+                        <td>{{ tx.date }}</td>
+                        <td>
+                            <span class="badge bg-{% if tx.transaction_type == 'PURCHASE' %}success{% else %}info{% endif %}">
+                                {{ tx.get_transaction_type_display }}
+                            </span>
+                        </td>
+                        <td class="text-end">{{ tx.quantity|floatformat:"-2" }}</td>
+                        <td class="text-end">${{ tx.unit_price|floatformat:2 }}</td>
+                        <td class="text-end">${{ tx.amount|floatformat:2 }}</td>
+                        <td>{{ tx.reference|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4">
+                            <div class="alert alert-info mb-0">
+                                No transactions recorded for this material.
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

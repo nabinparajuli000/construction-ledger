@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Material Transactions</h1>
+    <a href="{% url 'transaction-create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> New Transaction
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h5 class="mb-0">All Transactions</h5>
+            </div>
+            <div class="col-md-6">
+                <form method="get" class="row g-2">
+                    <div class="col">
+                        <select name="type" class="form-select">
+                            <option value="">All Types</option>
+                            {% for value, label in transaction_types %}
+                            <option value="{{ value }}" {% if request.GET.type == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col">
+                        <select name="material" class="form-select">
+                            <option value="">All Materials</option>
+                            {% for material in all_materials %}
+                            <option value="{{ material.pk }}" {% if request.GET.material == material.pk|stringformat:"s" %}selected{% endif %}>
+                                {{ material.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-outline-primary">Filter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Material</th>
+                        <th>Type</th>
+                        <th class="text-end">Quantity</th>
+                        <th class="text-end">Unit Price</th>
+                        <th class="text-end">Amount</th>
+                        <th>Reference</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transaction in object_list %}
+                    <tr>
+                        <td>{{ transaction.date }}</td>
+                        <td>
+                            <a href="{% url 'material-detail' transaction.material.pk %}">
+                                {{ transaction.material.name }}
+                            </a>
+                        </td>
+                        <td>
+                            <span class="badge bg-{% if transaction.transaction_type == 'PURCHASE' %}success{% else %}info{% endif %}">
+                                {{ transaction.get_transaction_type_display }}
+                            </span>
+                        </td>
+                        <td class="text-end">{{ transaction.quantity|floatformat:"-2" }} {{ transaction.material.unit_of_measure.abbreviation }}</td>
+                        <td class="text-end">${{ transaction.unit_price|floatformat:2 }}</td>
+                        <td class="text-end">${{ transaction.amount|floatformat:2 }}</td>
+                        <td>{{ transaction.reference|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <div class="alert alert-info mb-0">
+                                No transactions found. <a href="{% url 'transaction-create' %}">Record your first transaction</a>.
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% if is_paginated %}
+    <div class="card-footer">
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center mb-0">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.material %}&material={{ request.GET.material }}{% endif %}">First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.material %}&material={{ request.GET.material }}{% endif %}">Previous</a>
+                </li>
+                {% endif %}
+                
+                <li class="page-item active">
+                    <span class="page-link">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </span>
+                </li>
+                
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.material %}&material={{ request.GET.material }}{% endif %}">Next</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.material %}&material={{ request.GET.material }}{% endif %}">Last</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

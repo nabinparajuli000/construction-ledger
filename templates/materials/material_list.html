@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Materials Inventory</h1>
+    <a href="{% url 'material-create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Add Material
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Unit</th>
+                        <th class="text-end">Price</th>
+                        <th class="text-end">In Stock</th>
+                        <th class="text-end">Value</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for material in object_list %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'material-detail' material.pk %}">{{ material.name }}</a>
+                            {% if material.current_quantity <= material.minimum_stock_level %}
+                            <span class="badge bg-danger ms-2">Low</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ material.category.name }}</td>
+                        <td>{{ material.unit_of_measure.abbreviation }}</td>
+                        <td class="text-end">${{ material.price_per_unit|floatformat:2|intcomma }}</td>
+                        <td class="text-end">{{ material.current_quantity|floatformat:"-2"|intcomma }}</td>
+                        <td class="text-end">${{ material.total_value|floatformat:2|intcomma }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'material-update' material.pk %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'material-delete' material.pk %}" class="btn btn-outline-danger">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <div class="alert alert-info mb-0">
+                                No materials found. <a href="{% url 'material-create' %}">Add your first material</a>.
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

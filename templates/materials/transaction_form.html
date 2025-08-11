@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="mb-0">
+                    {% if object %}Edit Transaction{% else %}Record New Transaction{% endif %}
+                </h2>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <div class="form-text">{{ field.help_text }}</div>
+                            {% endif %}
+                            {% if field.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in field.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% if object %}{% url 'transaction-list' %}{% else %}{% url 'dashboard' %}{% endif %}" 
+                           class="btn btn-outline-secondary">
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            {% if object %}Update{% else %}Record{% endif %} Transaction
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Dynamic price update based on selected material
+    const materialSelect = document.getElementById('id_material');
+    const priceInput = document.getElementById('id_unit_price');
+    
+    if (materialSelect && priceInput) {
+        materialSelect.addEventListener('change', function() {
+            const materialId = this.value;
+            if (materialId) {
+                fetch(`/api/materials/${materialId}/price/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        priceInput.value = data.price;
+                    });
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}
